@@ -3,376 +3,314 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project: A.K.A.S.H | Classified</title>
+    <title>Akash Patel | Software Developer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;500;800&display=swap" rel="stylesheet">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Share+Tech+Mono&display=swap');
-
         :root {
-            --green: #00ff41;
-            --dark: #0d0d0d;
-            --dim: #003b00;
-            --red: #ff3333;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.9);
+            --accent: #2563eb;
         }
-
-        * { box-sizing: border-box; }
 
         body {
             margin: 0;
             padding: 0;
-            background-color: var(--dark);
-            color: var(--green);
-            font-family: 'Courier Prime', monospace;
-            overflow: hidden; /* Locked until solved */
+            font-family: 'Manrope', sans-serif;
+            background-color: #f3f4f6;
+            color: var(--text-primary);
+            overflow-x: hidden; /* Prevent horizontal scroll */
         }
 
-        /* --- SCREEN 1: THE LOCK (MYSTERY) --- */
-        #lock-screen {
+        /* The Physics Canvas (Background) */
+        #physics-canvas {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            background: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
-            transition: transform 1s ease-in-out, opacity 1s;
-        }
-
-        .glitch-text {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 2rem;
-            text-transform: uppercase;
-            letter-spacing: 5px;
-            margin-bottom: 2rem;
-            text-shadow: 2px 2px var(--red);
-            animation: glitch 1s infinite;
-            text-align: center;
-        }
-
-        .terminal-box {
-            border: 1px solid var(--green);
-            padding: 2rem;
-            width: 90%;
-            max-width: 500px;
-            background: rgba(0, 20, 0, 0.8);
-            box-shadow: 0 0 20px var(--dim);
-            position: relative;
-        }
-
-        .hint {
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
-            line-height: 1.5;
-            border-left: 3px solid var(--green);
-            padding-left: 15px;
-        }
-
-        input[type="text"] {
-            background: transparent;
-            border: none;
-            border-bottom: 2px solid var(--green);
-            color: var(--green);
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 1.5rem;
+            top: 0;
+            left: 0;
             width: 100%;
-            outline: none;
-            text-transform: uppercase;
+            height: 100%;
+            z-index: 0; /* Behind content */
+            pointer-events: auto; /* Allows interaction with shapes */
         }
 
-        #message-area {
-            height: 20px;
-            color: var(--red);
-            margin-top: 10px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-
-        /* Playable Background Element (Matrix Rain) */
-        canvas {
-            position: fixed;
-            top: 0; left: 0;
-            z-index: 0;
-            opacity: 0.15;
-        }
-
-        /* --- SCREEN 2: THE PORTFOLIO (REVEAL) --- */
-        #main-content {
-            display: none; /* Hidden initially */
+        /* The Scrollable Content Layer */
+        main {
             position: relative;
-            z-index: 10;
-            max-width: 900px;
+            z-index: 1; /* Above canvas */
+            max-width: 800px;
             margin: 0 auto;
-            padding: 2rem;
-            opacity: 0;
-            animation: fadeIn 2s forwards;
-            height: 100vh; /* Allow scrolling within */
-            overflow-y: auto;
+            padding: 4rem 1.5rem;
+            pointer-events: none; /* Let clicks pass through to canvas in gaps */
         }
 
-        header {
-            border-bottom: 2px solid var(--green);
-            padding-bottom: 2rem;
+        /* Cards/Sections */
+        section {
+            pointer-events: auto; /* Re-enable clicks for text selection */
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 3rem;
             margin-bottom: 3rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
         }
 
-        h1 { font-size: 3rem; margin: 0; letter-spacing: -2px; }
-        h2 { font-size: 1.2rem; background: var(--green); color: #000; display: inline-block; padding: 2px 8px; }
-
-        .section-title {
-            border-bottom: 1px dashed var(--green);
-            padding-bottom: 10px;
-            margin-top: 4rem;
-            margin-bottom: 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
         }
 
-        .card {
-            border: 1px solid var(--dim);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            background: rgba(0, 255, 65, 0.05);
-            transition: all 0.3s;
-        }
-        .card:hover {
-            border-color: var(--green);
-            box-shadow: 0 0 15px var(--dim);
-            transform: translateX(10px);
-        }
+        /* Typography */
+        h1 { font-size: 3.5rem; font-weight: 800; margin: 0 0 1rem 0; letter-spacing: -0.05em; }
+        h2 { font-size: 1.8rem; margin-top: 0; color: var(--accent); }
+        h3 { font-size: 1.2rem; margin: 0; font-weight: 800; }
+        h4 { font-size: 0.9rem; color: var(--text-secondary); margin: 0.2rem 0 1rem 0; font-weight: 500; }
+        p { line-height: 1.7; color: var(--text-secondary); margin-bottom: 1.5rem; }
 
+        /* Tags */
+        .tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
         .tag {
-            border: 1px solid var(--green);
-            padding: 5px 10px;
-            font-size: 0.8rem;
-            border-radius: 20px;
-            margin-right: 5px;
+            background: #fff;
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid #e5e7eb;
+            color: var(--accent);
+        }
+
+        /* Buttons */
+        .btn {
             display: inline-block;
-            margin-top: 10px;
-        }
-
-        .contact-btn {
-            display: block;
-            width: 100%;
-            padding: 20px;
-            background: var(--green);
-            color: #000;
-            text-align: center;
+            background: var(--text-primary);
+            color: white;
             text-decoration: none;
-            font-weight: bold;
-            font-size: 1.2rem;
-            margin-top: 3rem;
-            margin-bottom: 5rem;
-            text-transform: uppercase;
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: background 0.2s;
         }
-        .contact-btn:hover { background: #fff; }
+        .btn:hover { background: var(--accent); }
 
-        /* Animations */
-        @keyframes glitch {
-            0% { transform: translate(0) }
-            20% { transform: translate(-2px, 2px) }
-            40% { transform: translate(-2px, -2px) }
-            60% { transform: translate(2px, 2px) }
-            80% { transform: translate(2px, -2px) }
-            100% { transform: translate(0) }
-        }
-        @keyframes fadeIn { to { opacity: 1; } }
-
-        /* Mobile Response */
-        @media(max-width: 600px) {
-            h1 { font-size: 2rem; }
-            .glitch-text { font-size: 1.5rem; }
+        /* Mobile adjustments */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            section { padding: 2rem; }
         }
     </style>
 </head>
 <body>
 
-    <canvas id="matrixCanvas"></canvas>
+    <div id="physics-canvas"></div>
 
-    <div id="lock-screen">
-        <div class="glitch-text">Identity Protected</div>
-        <div class="terminal-box">
-            <p style="color: #fff; margin-bottom: 5px;">USER: GUEST</p>
-            <p style="color: #fff; margin-bottom: 20px;">ACCESS: RESTRICTED</p>
-            
-            <div class="hint">
-                <strong style="color: #fff;">SECURITY QUESTION:</strong><br>
-                To access the profile of Akash Patel, enter the programming language named after a snake.<br>
-                <em style="font-size: 0.8rem; color: #666;">(Hint: It is his top skill)</em> </div>
-
-            <div style="position: relative;">
-                <span style="position: absolute; left: 0; top: 5px;">></span>
-                <input type="text" id="passwordInput" style="padding-left: 20px;" placeholder="ENTER PASSWORD..." autofocus>
-            </div>
-            <div id="message-area"></div>
-        </div>
-    </div>
-
-    <div id="main-content">
-        <header>
-            <p>Subject Identity:</p>
-            <h1>AKASH PATEL</h1> <h2>SOFTWARE DEVELOPMENT STUDENT @ SAIT</h2> <p style="margin-top: 20px; max-width: 600px; line-height: 1.6;">
-                <strong>SUMMARY:</strong> Former Digital Strategist turned Developer. 
-                Combines backend logic (C#, Python) with a data-driven mindset from marketing. </p>
-        </header>
-
-        <div class="section-title">
-            <span>// TECHNICAL ARSENAL</span>
-            <span>[01]</span>
-        </div>
-        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-            <span class="tag">PYTHON</span>
-            <span class="tag">C#</span>
-            <span class="tag">SQL</span>
-            <span class="tag">HTML/CSS</span>
-            <span class="tag">PROJECT MANAGEMENT</span>
-        </div>
-
-        <div class="section-title">
-            <span>// PROJECT DATABASE</span>
-            <span>[02]</span>
-        </div>
-
-        <div class="card">
-            <h3 style="margin:0 0 10px 0; color: #fff;">EVENT ORGANIZER APP</h3>
-            <p>Status: <span style="color:var(--green)">COMPLETE</span></p>
-            <p>A comprehensive application designed to streamline event management logic with a focus on user-friendly interfaces.</p>
-            <span class="tag">UI/UX Logic</span>
-        </div>
-
-        <div class="card">
-            <h3 style="margin:0 0 10px 0; color: #fff;">FLIGHT RESERVATION SYSTEM</h3>
-            <p>Status: <span style="color:var(--green)">COMPLETE</span></p>
-            <p>Desktop application combining strong backend processing with intuitive booking management.</p>
-            <span class="tag">Backend Logic</span>
-        </div>
-
-        <div class="section-title">
-            <span>// EXPERIENCE LOG</span>
-            <span>[03]</span>
-        </div>
-
-        <div class="card">
-            <div style="display:flex; justify-content:space-between;">
-                <h3 style="margin:0; color: #fff;">THE GLENCOE CLUB</h3>
-                <span>2025 - PRESENT</span>
-            </div>
-            <p style="font-size: 0.9rem; margin-top: 5px;">BOWLING ATTENDANT</p>
-        </div>
-
-        <div class="card">
-            <div style="display:flex; justify-content:space-between;">
-                <h3 style="margin:0; color: #fff;">TEAM 121 CREATORS</h3>
-                <span>2021 - 2024</span>
-            </div>
-            <p style="font-size: 0.9rem; margin-top: 5px;">DIGITAL MARKETING STRATEGIST (INDIA)</p>
-            <p>Built a foundation in problem-solving and user behavior analysis.</p> </div>
-
-        <a href="https://www.linkedin.com/in/akashpatel29" class="contact-btn">
-            INITIATE CONTACT PROTOCOL (LINKEDIN) </a>
+    <main>
         
-        <p style="text-align: center; font-size: 0.8rem; color: #444;">END OF FILE. CLASSIFIED.</p>
-    </div>
+        <section>
+            <h4 style="color: var(--accent); text-transform: uppercase; letter-spacing: 2px;">Portfolio</h4>
+            <h1>Akash Patel</h1> <p style="font-size: 1.2rem; color: var(--text-primary);">
+                Software Development Student at SAIT. Transforming data-driven marketing strategies into intuitive software solutions. </p>
+            <div class="tags">
+                <span class="tag">Python</span> <span class="tag">C#</span> <span class="tag">SQL</span> <span class="tag">UX/UI</span> </div>
+        </section>
+
+        <section>
+            <h2>About Me</h2>
+            <p>
+                I am a Software Development student with a unique background in digital marketing and content strategy. 
+                Before transitioning into software, I worked in media buying and campaign management, which gave me a 
+                strong foundation in problem-solving and understanding user behavior. </p>
+            <p>
+                I now apply those skills to build web and desktop applications that combine strong backend logic with 
+                user-friendly designs. </p>
+        </section>
+
+        <section>
+            <h2>Featured Projects</h2>
+            
+            <div style="margin-bottom: 2rem;">
+                <h3>Event Organizer App</h3>
+                <h4>User Experience & Logic Design</h4>
+                <p>
+                    A comprehensive application designed to streamline event management. I focused heavily on 
+                    creating a user-friendly UI/UX while ensuring robust backend logic for handling event data. </p>
+                <div class="tags">
+                    <span class="tag">C#</span>
+                    <span class="tag">UI Design</span>
+                </div>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 2rem 0;">
+
+            <div>
+                <h3>Flight Reservation System</h3>
+                <h4>Desktop Application</h4>
+                <p>
+                    Developed a full desktop reservation system. This project required complex logic to manage 
+                    bookings, passenger data, and scheduling, demonstrating my ability to handle data-heavy applications. </p>
+                <div class="tags">
+                    <span class="tag">Database Management</span>
+                    <span class="tag">Backend Logic</span>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Experience</h2>
+
+            <div style="margin-bottom: 2rem;">
+                <h3>The Glencoe Club</h3>
+                <h4>Bowling Attendant | Calgary, Canada</h4>
+                <h4>June 2025 - Present</h4> <p>Providing excellent customer service and facility management in a high-end recreational environment.</p>
+            </div>
+
+            <div style="margin-bottom: 2rem;">
+                <h3>Creativeline</h3>
+                <h4>Paid Social Campaign Manager</h4>
+                <h4>June 2024</h4> <p>Managed paid social campaigns, optimizing for engagement and data performance.</p>
+            </div>
+
+            <div>
+                <h3>Team 121 Creators</h3>
+                <h4>Digital Marketing Strategist | India</h4>
+                <h4>Jan 2021 - June 2024</h4> <p>Led content strategy and media buying for over 3 years, developing a data-driven mindset that I now use in software debugging and logic flow. </p>
+            </div>
+        </section>
+
+        <section>
+            <h2>Let's Connect</h2>
+            <p>I am currently seeking co-op and internship opportunities.</p> <p>
+                <strong>Email:</strong> akash.work2911@gmail.com<br> <strong>Phone:</strong> +1 (825)-982-2911 </p>
+            <a href="https://www.linkedin.com/in/akashpatel29" class="btn">LinkedIn Profile</a> </section>
+
+    </main>
 
     <script>
-        // --- 1. THE MATRIX RAIN (Playable Background) ---
-        const canvas = document.getElementById('matrixCanvas');
-        const ctx = canvas.getContext('2d');
+        // --- MATTER.JS PHYSICS ENGINE ---
+        const Engine = Matter.Engine,
+              Render = Matter.Render,
+              Runner = Matter.Runner,
+              Bodies = Matter.Bodies,
+              Composite = Matter.Composite,
+              Mouse = Matter.Mouse,
+              MouseConstraint = Matter.MouseConstraint,
+              Events = Matter.Events,
+              Body = Matter.Body;
 
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        const katakana = 'AKASHPATELPYTHONCSHARPSQLCODE01';
-        const alphabet = katakana.split('');
-
-        const fontSize = 16;
-        const columns = canvas.width/fontSize;
-
-        const drops = [];
-        for(let x = 0; x < columns; x++) {
-            drops[x] = 1;
-        }
-
-        // Mouse Interaction for the Matrix
-        let mouseX = 0;
-        let mouseY = 0;
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-        });
-
-        function draw() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.fillStyle = '#0F0';
-            ctx.font = fontSize + 'px monospace';
-
-            for(let i = 0; i < drops.length; i++) {
-                const text = alphabet[Math.floor(Math.random()*alphabet.length)];
-                
-                // Interaction: If mouse is near this column, change color or speed
-                const xPos = i * fontSize;
-                const dist = Math.abs(xPos - mouseX);
-                
-                if(dist < 50) {
-                    ctx.fillStyle = '#fff'; // Highlight near mouse
-                } else {
-                    ctx.fillStyle = '#0F0';
-                }
-
-                ctx.fillText(text, i*fontSize, drops[i]*fontSize);
-
-                if(drops[i]*fontSize > canvas.height && Math.random() > 0.975)
-                    drops[i] = 0;
-
-                drops[i]++;
-            }
-        }
-        setInterval(draw, 33);
-
-        // --- 2. THE MYSTERY LOGIC ---
-        const input = document.getElementById('passwordInput');
-        const lockScreen = document.getElementById('lock-screen');
-        const mainContent = document.getElementById('main-content');
-        const message = document.getElementById('message-area');
-        const body = document.body;
-
-        input.addEventListener('keyup', function(event) {
-            if (event.key === "Enter") {
-                const answer = input.value.toLowerCase().trim();
-                
-                // Acceptable answers
-                if(answer === "python" || answer === "snake") {
-                    unlockSystem();
-                } else {
-                    message.textContent = "ACCESS DENIED. INCORRECT PASSWORD.";
-                    input.value = "";
-                    
-                    // Shake animation
-                    lockScreen.style.transform = "translateX(10px)";
-                    setTimeout(() => lockScreen.style.transform = "translateX(-10px)", 100);
-                    setTimeout(() => lockScreen.style.transform = "translateX(0)", 200);
-                }
+        const engine = Engine.create();
+        engine.world.gravity.y = 0; // Zero gravity for floating effect
+        
+        const render = Render.create({
+            element: document.getElementById('physics-canvas'),
+            engine: engine,
+            options: {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                wireframes: false,
+                background: 'transparent'
             }
         });
 
-        function unlockSystem() {
-            message.style.color = "#00ff41";
-            message.textContent = "PASSWORD ACCEPTED. DECRYPTING...";
+        // Create "Fidget" Shapes
+        const shapes = [];
+        const colors = ['#93c5fd', '#c4b5fd', '#6ee7b7', '#fcd34d']; // Pastel Palette
+
+        for(let i=0; i < 15; i++) {
+            const size = Math.random() * 30 + 20;
+            const x = Math.random() * window.innerWidth;
+            const y = Math.random() * window.innerHeight;
+            const color = colors[Math.floor(Math.random() * colors.length)];
             
-            // Success Sound Effect (Visual)
-            input.disabled = true;
-            
-            setTimeout(() => {
-                lockScreen.style.opacity = "0";
-                setTimeout(() => {
-                    lockScreen.style.display = "none";
-                    mainContent.style.display = "block";
-                    body.style.overflowY = "auto"; // Enable scrolling
-                }, 1000);
-            }, 1500);
+            let body;
+            if (Math.random() > 0.5) {
+                body = Bodies.circle(x, y, size, {
+                    render: { fillStyle: color },
+                    restitution: 0.9,
+                    frictionAir: 0.02
+                });
+            } else {
+                body = Bodies.rectangle(x, y, size * 1.5, size * 1.5, {
+                    render: { fillStyle: color },
+                    chamfer: { radius: 10 },
+                    restitution: 0.9,
+                    frictionAir: 0.02
+                });
+            }
+            shapes.push(body);
         }
+        Composite.add(engine.world, shapes);
+
+        // Walls (invisible boundaries)
+        const wallOptions = { isStatic: true, render: { visible: false } };
+        const walls = [
+            Bodies.rectangle(window.innerWidth/2, -50, window.innerWidth, 100, wallOptions), // Top
+            Bodies.rectangle(window.innerWidth/2, window.innerHeight + 50, window.innerWidth, 100, wallOptions), // Bottom
+            Bodies.rectangle(window.innerWidth + 50, window.innerHeight/2, 100, window.innerHeight, wallOptions), // Right
+            Bodies.rectangle(-50, window.innerHeight/2, 100, window.innerHeight, wallOptions) // Left
+        ];
+        Composite.add(engine.world, walls);
+
+        // Mouse Interaction
+        const mouse = Mouse.create(render.canvas);
+        const mouseConstraint = MouseConstraint.create(engine, {
+            mouse: mouse,
+            constraint: {
+                stiffness: 0.1,
+                render: { visible: false }
+            }
+        });
+        Composite.add(engine.world, mouseConstraint);
+
+        // Scroll Interaction (The "Playable" aspect reacting to user behavior)
+        let lastScrolltop = 0;
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollSpeed = Math.abs(scrollTop - lastScrolltop);
+            
+            // Apply turbulence to shapes based on scroll speed
+            shapes.forEach(shape => {
+                Body.applyForce(shape, shape.position, {
+                    x: (Math.random() - 0.5) * (scrollSpeed * 0.0005),
+                    y: (Math.random() - 0.5) * (scrollSpeed * 0.0005)
+                });
+            });
+            lastScrolltop = scrollTop;
+        });
+
+        // Mouse Attractor (Subtle follow)
+        Events.on(engine, 'beforeUpdate', function() {
+            const mousePos = mouse.position;
+            shapes.forEach(shape => {
+                // Calculate vector to mouse
+                const dx = mousePos.x - shape.position.x;
+                const dy = mousePos.y - shape.position.y;
+                
+                // Apply very tiny force towards mouse (Gravity-like pull)
+                // Only if mouse is on screen
+                if(mousePos.x > 0 && mousePos.x < window.innerWidth) {
+                    Body.applyForce(shape, shape.position, {
+                        x: dx * 0.00001,
+                        y: dy * 0.00001
+                    });
+                }
+            });
+        });
+
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            render.canvas.width = window.innerWidth;
+            render.canvas.height = window.innerHeight;
+            // Recreate walls... (omitted for brevity, but walls persist)
+        });
+
+        Render.run(render);
+        const runner = Runner.create();
+        Runner.run(runner, engine);
+
     </script>
 </body>
 </html>
