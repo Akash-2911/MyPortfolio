@@ -2,401 +2,299 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Akash Patel | Interactive Portfolio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Akash Patel | Creative Developer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    
     <style>
-        :root {
-            --primary: #00f2fe;
-            --secondary: #4facfe;
-            --bg: #0a0a0a;
-            --text: #e0e0e0;
-            --card-bg: rgba(255, 255, 255, 0.05);
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap');
 
-        * { margin: 0; padding: 0; box-sizing: border-box; cursor: none; /* Custom cursor */ }
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden; /* Prevent scrolling, the content is the playground */
+            background-color: #f4f4f5;
+            font-family: 'Inter', sans-serif;
+            color: #18181b;
+            touch-action: none; /* Important for mobile dragging */
         }
 
-        /* Custom Cursor */
-        #cursor {
-            position: fixed;
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--primary);
-            border-radius: 50%;
-            pointer-events: none;
-            transform: translate(-50%, -50%);
-            transition: width 0.2s, height 0.2s;
-            z-index: 9999;
-            mix-blend-mode: difference;
-        }
-
-        #cursor.hovered {
-            width: 50px;
-            height: 50px;
-            background-color: rgba(0, 242, 254, 0.2);
-            border-color: var(--secondary);
-        }
-
-        /* Interactive Background Canvas */
-        canvas {
-            position: fixed;
-            top: 0;
+        /* The Instruction Text overlay */
+        #ui-layer {
+            position: absolute;
+            top: 20px;
             left: 0;
             width: 100%;
-            height: 100%;
-            z-index: -1;
+            text-align: center;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        h1 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #a1a1aa;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
-        /* Container */
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 2rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        header {
-            height: 100vh;
+        /* Common Physics Item Style */
+        .physics-item {
+            position: absolute;
+            top: 0;
+            left: 0;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            align-items: flex-start;
+            align-items: center;
+            text-align: center;
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e4e4e7;
+            border-radius: 12px;
+            padding: 15px;
+            user-select: none;
+            will-change: transform;
+            cursor: grab;
+            transform-origin: center center;
         }
 
-        h1 {
-            font-size: 5rem;
-            background: linear-gradient(to right, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 1rem;
+        .physics-item:active {
+            cursor: grabbing;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
 
-        h2 {
-            font-size: 2rem;
-            color: #fff;
-            margin-bottom: 1rem;
+        /* Specific Card Styles */
+        .card-profile {
+            background: #18181b; /* Dark card for contrast */
+            color: white;
+            width: 300px;
+        }
+        .card-profile h2 { margin: 0; font-size: 1.5rem; }
+        .card-profile p { color: #a1a1aa; margin: 5px 0 15px 0; font-size: 0.9rem; }
+        .social-links a { 
+            color: #fff; text-decoration: none; border-bottom: 1px solid #fff; margin: 0 5px; font-size: 0.8rem;
+            pointer-events: auto; /* Allow clicking links */
         }
 
-        .tagline {
-            font-size: 1.2rem;
-            color: #aaa;
-            max-width: 600px;
-            line-height: 1.6;
+        .card-project {
+            width: 260px;
+            background: #ffffff;
         }
+        .card-project h3 { margin: 0 0 5px 0; font-size: 1.1rem; color: #2563eb; }
+        .card-project p { font-size: 0.85rem; color: #52525b; margin: 0; }
 
-        section {
-            padding: 4rem 0;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.8s ease-out;
+        .card-exp {
+            width: 280px;
+            border-left: 4px solid #10b981;
         }
+        .card-exp h3 { margin: 0; font-size: 1rem; }
+        .card-exp span { font-size: 0.75rem; color: #71717a; display: block; margin-bottom: 5px; }
 
-        section.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-
-        .card {
-            background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 15px;
-            border: 1px solid rgba(255,255,255,0.1);
-            transition: transform 0.3s;
-            backdrop-filter: blur(5px);
-        }
-
-        .card:hover {
-            transform: translateY(-10px);
-            border-color: var(--primary);
-        }
-
-        .skill-tag {
-            display: inline-block;
-            padding: 5px 15px;
-            margin: 5px;
-            border-radius: 20px;
-            border: 1px solid var(--primary);
-            color: var(--primary);
-            font-size: 0.9rem;
-        }
-
-        .btn {
-            display: inline-block;
-            margin-top: 2rem;
-            padding: 1rem 2rem;
-            background: transparent;
-            border: 2px solid var(--primary);
-            color: #fff;
-            text-decoration: none;
+        .skill-ball {
+            border-radius: 50px;
+            background: #2563eb;
+            color: white;
             font-weight: bold;
-            transition: all 0.3s;
+            font-size: 0.9rem;
+            padding: 10px 20px;
+            height: auto;
+            border: none;
         }
+        
+        .skill-secondary { background: #6366f1; }
+        .skill-tertiary { background: #8b5cf6; }
 
-        .btn:hover {
-            background: var(--primary);
-            color: #000;
-            box-shadow: 0 0 20px var(--primary);
-        }
-
-        /* Mobile responsiveness */
-        @media (max-width: 768px) {
-            h1 { font-size: 3rem; }
-            .cursor { display: none; } /* Hide custom cursor on touch devices */
-        }
     </style>
 </head>
 <body>
 
-    <div id="cursor"></div>
-    <canvas id="neuroNetwork"></canvas>
-
-    <div class="container">
-        <header>
-            <h3>Hello, I am</h3>
-            <h1>Akash Patel</h1> <h2>Software Development Student at SAIT</h2> <p class="tagline">
-                Combining a data-driven mindset from Digital Marketing with technical expertise in C#, Python, and SQL to build intuitive software solutions. </p>
-            <a href="#contact" class="btn hover-trigger">Connect With Me</a>
-        </header>
-
-        <section id="skills">
-            <h2 class="hover-trigger">Technical Arsenal</h2>
-            <div class="grid">
-                <div class="card hover-trigger">
-                    <h3>Core Languages</h3>
-                    <div style="margin-top:1rem;">
-                        <span class="skill-tag">Python</span>
-                        <span class="skill-tag">C#</span>
-                        <span class="skill-tag">SQL</span>
-                        <span class="skill-tag">HTML/CSS</span>
-                    </div>
-                </div>
-                <div class="card hover-trigger">
-                    <h3>Expertise</h3>
-                    <p>UX/UI Design, Database Projects, Backend Logic, User Behaviour Analysis.</p> </div>
-            </div>
-        </section>
-
-        <section id="projects">
-            <h2 class="hover-trigger">Key Projects</h2>
-            <div class="grid">
-                <div class="card hover-trigger">
-                    <h3>Event Organizer App</h3>
-                    <p>A comprehensive application designed to streamline event management logic with a focus on user-friendly interfaces.</p>
-                </div>
-                <div class="card hover-trigger">
-                    <h3>Flight Reservation System</h3>
-                    <p>A desktop application combining strong backend processing with intuitive UI for booking management.</p>
-                </div>
-            </div>
-        </section>
-
-        <section id="experience">
-            <h2 class="hover-trigger">Experience Journey</h2>
-            <div class="grid">
-                <div class="card hover-trigger">
-                    <h3>Digital Marketing & Strategy</h3>
-                    <p><strong>Team 121 Creators & Creativeline</strong> (2021 - 2024)</p> <p>Developed strong foundations in project management, problem-solving, and adaptability.</p> </div>
-                <div class="card hover-trigger">
-                    <h3>Customer Service</h3>
-                    <p><strong>The Glencoe Club</strong> (Present)</p> <p>Enhancing user experience and service delivery in a fast-paced environment.</p>
-                </div>
-            </div>
-        </section>
-
-        <section id="contact" style="margin-bottom: 4rem;">
-            <h2 class="hover-trigger">Get In Touch</h2>
-            <div class="card hover-trigger" style="text-align: center;">
-                <p>I am currently seeking co-op and internship opportunities.</p> <br>
-                <p><strong>Email:</strong> akash.work2911@gmail.com</p> <p><strong>Phone:</strong> +1 (825)-982-2911</p> <a href="https://www.linkedin.com/in/akashpatel29" class="btn">LinkedIn Profile</a> </div>
-        </section>
+    <div id="ui-layer">
+        <h1>Akash Patel's Workspace</h1>
+        <p style="font-size: 0.8rem; color: #d4d4d8; margin-top: 5px;">Drag. Throw. Explore.</p>
     </div>
 
+    <div id="physics-container"></div>
+
     <script>
-        // --- 1. Custom Cursor Logic ---
-        const cursor = document.getElementById('cursor');
-        const hoverTriggers = document.querySelectorAll('.hover-trigger, a, .btn');
+        // --- 1. CONFIGURATION & DATA ---
+        // Sources mapped from your PDF
+        const data = [
+            { 
+                type: 'profile', 
+                x: window.innerWidth / 2, 
+                y: 150, 
+                content: `
+                    <h2>Akash Patel</h2>
+                    <p>Software Development Student @ SAIT</p>
+                    <div class="social-links" onmousedown="event.stopPropagation()">
+                        <a href="https://www.linkedin.com/in/akashpatel29" target="_blank">LinkedIn</a> | 
+                        <a href="mailto:akash.work2911@gmail.com">Email</a>
+                    </div>`
+            },
+            {
+                type: 'project',
+                x: window.innerWidth / 2 - 150,
+                y: 300,
+                content: `
+                    <h3>Event Organizer App</h3>
+                    <p>Streamlined event management with user-friendly UX/UI logic.</p>` 
+            },
+            {
+                type: 'project',
+                x: window.innerWidth / 2 + 150,
+                y: 350,
+                content: `
+                    <h3>Flight System</h3>
+                    <p>Desktop reservation app combining C# backend with intuitive design.</p>`
+            },
+            {
+                type: 'exp',
+                x: window.innerWidth / 2 - 100,
+                y: 500,
+                content: `
+                    <h3>Digital Marketing</h3>
+                    <span>Team 121 & Creativeline</span>
+                    <p>3+ years experience in data-driven strategy & project management.</p>`
+            },
+            // Skills as "Balls" or "Pills"
+            { type: 'skill', text: 'Python', x: window.innerWidth/2 - 50, y: 200, class: '' },
+            { type: 'skill', text: 'C#', x: window.innerWidth/2 + 50, y: 220, class: 'skill-secondary' },
+            { type: 'skill', text: 'SQL', x: window.innerWidth/2, y: 240, class: 'skill-tertiary' },
+            { type: 'skill', text: 'HTML/CSS', x: window.innerWidth/2 + 20, y: 260, class: '' },
+        ];
 
-        document.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
-        });
+        // --- 2. MATTER.JS SETUP ---
+        const Engine = Matter.Engine,
+              Render = Matter.Render,
+              Runner = Matter.Runner,
+              Bodies = Matter.Bodies,
+              Composite = Matter.Composite,
+              Mouse = Matter.Mouse,
+              MouseConstraint = Matter.MouseConstraint,
+              Events = Matter.Events;
 
-        hoverTriggers.forEach(trigger => {
-            trigger.addEventListener('mouseenter', () => cursor.classList.add('hovered'));
-            trigger.addEventListener('mouseleave', () => cursor.classList.remove('hovered'));
-        });
+        // Create engine
+        const engine = Engine.create();
+        const world = engine.world;
 
-        // --- 2. Interactive Canvas Background (The "Playable" Element) ---
-        const canvas = document.getElementById('neuroNetwork');
-        const ctx = canvas.getContext('2d');
-        let particlesArray;
+        // Create runner
+        const runner = Runner.create();
+        Runner.run(runner, engine);
 
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        const container = document.getElementById('physics-container');
+        const entities = [];
 
-        let mouse = {
-            x: null,
-            y: null,
-            radius: 150 // Interaction radius
-        }
-
-        window.addEventListener('mousemove', function(event) {
-            mouse.x = event.x;
-            mouse.y = event.y;
-        });
-
-        // Create Particle Class
-        class Particle {
-            constructor(x, y, directionX, directionY, size, color) {
-                this.x = x;
-                this.y = y;
-                this.directionX = directionX;
-                this.directionY = directionY;
-                this.size = size;
-                this.color = color;
-            }
+        // --- 3. CREATE BODIES FROM DATA ---
+        
+        data.forEach(item => {
+            // Create DOM element
+            const el = document.createElement('div');
+            el.classList.add('physics-item');
             
-            // Method to draw individual particle
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
-                ctx.fillStyle = '#00f2fe';
-                ctx.fill();
+            if(item.type === 'profile') {
+                el.classList.add('card-profile');
+                el.innerHTML = item.content;
+            } else if(item.type === 'project') {
+                el.classList.add('card-project');
+                el.innerHTML = item.content;
+            } else if(item.type === 'exp') {
+                el.classList.add('card-exp');
+                el.innerHTML = item.content;
+            } else if(item.type === 'skill') {
+                el.classList.add('skill-ball');
+                if(item.class) el.classList.add(item.class);
+                el.innerText = item.text;
             }
 
-            // Check particle position, check mouse position, move the particle, draw the particle
-            update() {
-                // Check if particle is still within canvas
-                if (this.x > canvas.width || this.x < 0) {
-                    this.directionX = -this.directionX;
-                }
-                if (this.y > canvas.height || this.y < 0) {
-                    this.directionY = -this.directionY;
-                }
+            container.appendChild(el);
 
-                // Collision detection - mouse position / particle position
-                let dx = mouse.x - this.x;
-                let dy = mouse.y - this.y;
-                let distance = Math.sqrt(dx*dx + dy*dy);
-                
-                // "Playable" element: If mouse is close, particles move away slightly (repel)
-                // OR they can connect (constellation). Let's do connection in connect() function
-                // and subtle attraction here to make it follow user.
-                if (distance < mouse.radius + this.size){
-                    if (mouse.x < this.x && this.x < canvas.width - this.size * 10) {
-                        this.x += 2; // Move away/towards
-                    }
-                    if (mouse.x > this.x && this.x > this.size * 10) {
-                        this.x -= 2;
-                    }
-                    if (mouse.y < this.y && this.y < canvas.height - this.size * 10) {
-                        this.y += 2;
-                    }
-                    if (mouse.y > this.y && this.y > this.size * 10) {
-                        this.y -= 2;
-                    }
-                }
+            // Get dimensions after render to make physics body match
+            const width = el.offsetWidth;
+            const height = el.offsetHeight;
+            const radius = item.type === 'skill' ? 25 : 0; // Approximation for rounded corners
 
-                // Move particle
-                this.x += this.directionX;
-                this.y += this.directionY;
-                this.draw();
-            }
-        }
-
-        // Create particle array
-        function init() {
-            particlesArray = [];
-            let numberOfParticles = (canvas.height * canvas.width) / 9000;
-            for (let i = 0; i < numberOfParticles; i++) {
-                let size = (Math.random() * 3) + 1;
-                let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
-                let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
-                let directionX = (Math.random() * 2) - 1;
-                let directionY = (Math.random() * 2) - 1;
-                let color = '#00f2fe';
-
-                particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
-            }
-        }
-
-        // Connect particles with lines
-        function connect() {
-            let opacityValue = 1;
-            for (let a = 0; a < particlesArray.length; a++) {
-                for (let b = a; b < particlesArray.length; b++) {
-                    let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x))
-                    + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
-                    
-                    if (distance < (canvas.width/7) * (canvas.height/7)) {
-                        opacityValue = 1 - (distance/20000);
-                        ctx.strokeStyle = 'rgba(0, 242, 254,' + opacityValue + ')';
-                        ctx.lineWidth = 1;
-                        ctx.beginPath();
-                        ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
-                        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
-                        ctx.stroke();
-                    }
-                }
-            }
-        }
-
-        // Animation Loop
-        function animate() {
-            requestAnimationFrame(animate);
-            ctx.clearRect(0, 0, innerWidth, innerHeight);
-            
-            for (let i = 0; i < particlesArray.length; i++) {
-                particlesArray[i].update();
-            }
-            connect();
-        }
-
-        // Click Explosion (Playable Element)
-        window.addEventListener('click', (e) => {
-            for(let i=0; i<5; i++) {
-                particlesArray.push(new Particle(e.x, e.y, (Math.random()*5)-2.5, (Math.random()*5)-2.5, Math.random()*5 + 2, '#fff'));
-            }
-        });
-
-        // Resize event
-        window.addEventListener('resize', () => {
-            canvas.width = innerWidth;
-            canvas.height = innerHeight;
-            mouse.radius = ((canvas.height/80) * (canvas.height/80));
-            init();
-        });
-
-        // --- 3. Scroll Reveal Logic ---
-        const observerOptions = { threshold: 0.2 };
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
+            // Create Physics Body
+            // We use a chamfer (rounded corner) for smoother collisions
+            const body = Bodies.rectangle(item.x, item.y, width, height, { 
+                chamfer: { radius: item.type === 'skill' ? 20 : 10 },
+                restitution: 0.5, // Bounciness
+                friction: 0.5,
+                density: 0.04
             });
-        }, observerOptions);
 
-        document.querySelectorAll('section').forEach(section => {
-            observer.observe(section);
+            Composite.add(world, body);
+            entities.push({ body: body, element: el });
         });
 
-        init();
-        animate();
+        // --- 4. WALLS (Boundaries) ---
+        let walls = [];
+        function createWalls() {
+            Composite.remove(world, walls);
+            const thickness = 100;
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            walls = [
+                Bodies.rectangle(width/2, height + thickness/2, width, thickness, { isStatic: true }), // Floor
+                Bodies.rectangle(width + thickness/2, height/2, thickness, height*4, { isStatic: true }), // Right
+                Bodies.rectangle(-thickness/2, height/2, thickness, height*4, { isStatic: true }) // Left
+            ];
+            
+            Composite.add(world, walls);
+        }
+        createWalls();
+        window.addEventListener('resize', createWalls);
+
+        // --- 5. MOUSE CONTROL ---
+        // We need a "Mouse" for Matter.js to interact with, even though we aren't rendering to canvas.
+        // We attach it to the body for coordinate capture.
+        const mouse = Mouse.create(document.body); 
+        const mouseConstraint = MouseConstraint.create(engine, {
+            mouse: mouse,
+            constraint: {
+                stiffness: 0.2,
+                render: { visible: false }
+            }
+        });
+        Composite.add(world, mouseConstraint);
+
+        // Fix scroll issue on touch devices
+        mouse.element.removeEventListener("mousewheel", mouse.mousewheel);
+        mouse.element.removeEventListener("DOMMouseScroll", mouse.mousewheel);
+
+        // --- 6. ANIMATION LOOP (Sync DOM to Physics) ---
+        function update() {
+            entities.forEach(entity => {
+                const { x, y } = entity.body.position;
+                const angle = entity.body.angle;
+                
+                // Update CSS transform
+                entity.element.style.transform = `translate(${x - entity.element.offsetWidth/2}px, ${y - entity.element.offsetHeight/2}px) rotate(${angle}rad)`;
+            });
+            requestAnimationFrame(update);
+        }
+        update();
+
+        // --- 7. INTERACTION TWEAK ---
+        // Add a little random velocity on start so they aren't perfectly stacked
+        setTimeout(() => {
+             entities.forEach(ent => {
+                 Matter.Body.setVelocity(ent.body, { 
+                     x: (Math.random() - 0.5) * 5, 
+                     y: (Math.random() - 0.5) * 5 
+                 });
+             });
+        }, 500);
+
     </script>
 </body>
 </html>
